@@ -1,0 +1,866 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<!-- Called from DISK.MONITOR.JSI to display disk map. -->
+
+<html>
+<head>
+<title>Johnson Supply Sysmon</title>
+<STYLE TYPE="text/css">
+<!--
+.padd {
+ padding-left:10px;
+}
+.headrow
+{
+  background-color:#808000;
+  color:black; 
+}
+
+.normalrow
+{
+  background-color:#008000;
+  color:white; 
+}
+
+.attrow 
+{
+  background-color:#ffff00;
+  color:black; 
+}
+.alarmrow 
+{
+  background-color:#ff0000;
+  color:white; 
+}
+.errline
+{
+  background-color:#ff0000;
+  color:white; 
+}
+.pth
+{
+  background-color:#ff0000;
+  color:white; 
+  font-size: 10px;
+}
+div.scroll
+{
+  overflow: auto;
+  border: 1px solid #666;
+  background-color: #ccc;
+  padding: 8px;
+}
+.LastMod
+{
+  font-size: .5em;
+  background-color:#9999ff;
+  color:black; 
+}
+-->
+</STYLE>
+<HTA:APPLICATION  
+     ID="objHTA_Info"  
+     APPLICATIONNAME="HTA_Info"  
+     SINGLEINSTANCE="yes"  
+>  
+
+    <object id="alarm" width="0" height="0"
+     style="position:absolute; left:0;top:0; visibility: hidden"
+     CLASSID="CLSID:6BF52A52-394A-11d3-B153-00C04F79FAA6"
+     type="application/x-oleobject">
+    </object>
+</head>
+<SCRIPT LANGUAGE="VBScript">
+'******************************************************************
+'	C:\Program Files (x86)\Microsoft Office\Office12\MEDIA\EXPLODE.WAV
+'******************************************************************
+Dim LastDFUpdatedate, LastLPUpdatedate, objFSO, dq, HTAPath, LastCheck, UpdFlg, CurFlg, Debg, intLeft, intTop, intWdt, intHgt
+Dim BlFlg, Closeat, DataPath
+Const ForReading = 1
+Const ForWriting = 2
+
+Sub Window_OnLoad()
+'    playAlarm
+    DataPath = "U:\sysmon\"
+	DataPath = "U:\sysmon\"
+	Set objFSO = CreateObject("Scripting.FileSystemObject")
+    intWdt = 850: intHgt = 800	'1050
+    intLeft = 1070: intTop = 1
+
+    Filename = "sysmon.hta"
+    strTextFile = Filename
+    on error Resume Next
+    Set dffile = objFSO.GetFile(Filename)
+    Updatedate = dffile.DateLastModified
+    LastMod.innerHTML = "Last Modified on " & Updatedate
+
+    HTAPath=objHTA_Info.commandLine
+    HTAPath=mid(HTAPath,2,instrrev(HTAPath,"\")-2)
+    Debg=""
+    If instr(HTAPath,"Dev")<>0 then
+       Debg="set"
+       pth.innerHTML = "<br>" & HTAPath
+    End If
+    On Error Resume Next
+    Set objFile = objFSO.OpenTextFile("c:\jsi-temp" & "\Sysmon.ini", ForReading)
+    strContents = objFile.ReadAll
+    objFile.Close
+
+    If Err.Number=0 Then
+        arrContents = Split(strContents, ",")
+        intLeft = arrContents(0)
+        intTop = arrContents(1)
+        intWth = arrContents(2)
+        intHgt = arrContents(3)
+    End If
+
+    strComputer = "."
+    Set objWMIService = GetObject("winmgmts:\\" & strComputer & "\root\cimv2")
+    Set colItems = objWMIService.ExecQuery("Select * From Win32_DesktopMonitor")
+    For Each objItem In colItems
+        intHorizontal = objItem.ScreenWidth
+        intVertical = objItem.ScreenHeight
+    Next
+'   intLeft = (intHorizontal - Wdt) / 2
+ '  intTop = (intVertical - Hgt) / 2
+    Window.resizeTo intWdt, intHgt
+    If intLeft < 0 Then intLeft=0
+    If intTop  < 0 Then intTop=0
+    Window.moveTo intLeft, intTop
+'    Stats.innerHTML = "intWdt=" & intWdt & " intHgt=" & intHgt & "<br>"
+'    Stats.innerHTML = Stats.innerHTML & "ClientWidth=" & document.body.clientWidth & " "
+'    Stats.innerHTML = Stats.innerHTML & "ClientHeight=" & document.body.clientHeight & "<br>"
+'    Stats.innerHTML = Stats.innerHTML & "DeltaW=" & intWdt - document.body.clientWidth & " "
+'    Stats.innerHTML = Stats.innerHTML & "DeltaH=" & intHgt - document.body.clientHeight & " "
+'    Stats.innerHTML = Stats.innerHTML & "<br>" 
+    UpdFlg = (Hour(Now()) * 60 + Minute(Now())) * 60 + Second(Now()) + 61
+    Main ("First")
+    intTimer = 0
+    intTimer = Window.setInterval("Main(0)", 2000)
+End Sub
+
+Sub Window_onBeforeUnLoad
+    intLeft = window.screenLeft-9
+    intTop = window.screenTop-36
+    intWth = document.body.offsetWidth
+    intHgt = document.body.offsetHeight 
+
+'    msgbox intLeft & " " &intTop & " " & intWth & " " & intHgt
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set objFile = objFSO.CreateTextFile("c:\jsi-temp" & "\Sysmon.ini", ForWriting)
+    objFile.WriteLine intLeft & "," & intTop & "," & intWth & "," & intHgt
+    objFile.Close
+    MSG = "CWidth="&document.body.clientWidth & " - Left=" &window.screenLeft & " - Width="&intWth & vbcrlf
+    MSG = MSG & "Cheight="&document.body.clientHeight&" - top="&window.screenTop & " - Heigth="&intHgt
+End Sub
+
+Sub Main(val)
+    CurFlg = (Hour(Now()) * 60 + Minute(Now())) * 60 + Second(Now())
+
+    On Error Resume Next
+	Set objFSO = CreateObject("Scripting.FileSystemObject")
+	
+	strTextFile = DataPath & "stopat.txt"
+	Closeat = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+	If Right(autoclose.innerHTML, 1)="*" Then
+		Clock.innerHTML = Now()
+		autoclose.innerHTML = "Sleep at " & Closeat
+	Else
+		Clock.innerHTML = "* " & Now()
+		autoclose.innerHTML = "Sleep at " & Closeat & " *"
+	End If
+	
+    Rflg = 1
+'   If Closeat <> "" Then
+        If (Now() - Date) > TimeValue("07:00") And (Now() - Date) < TimeValue(Trim(Closeat)) Then 
+		  Rflg = 1 
+		  If (Now() - Date) < TimeValue("07:05") Then Val="First"
+		Else
+  		  Rflg = 0
+		End IF
+'   End If
+    If Rflg Then
+        If Val = "First" Or CurFlg >= UpdFlg Then
+            UpdFlg = (Hour(Now()) * 60 + Minute(Now())) * 60 + Second(Now()) + 61
+            Call ReadTime
+            Call Disk
+			Call array_check
+			Call IPC_Check
+            Call Optio
+            Call UnixErr
+            Call phantom
+            Call Scheduler
+			Call SchedStatus
+            Call UDTErr
+			Call WebServerBack
+            Call CheckSears
+'           strBody = xyz.innerHTML
+'           document.parentwindow.clipboardData.SetData "text", strBody
+        End If
+    End If
+    
+	Diff = UpdFlg - CurFlg
+    txt=""
+    If (Diff/2) = int(Diff/2) then 
+      If BlFlg=1 Then BlFlg=0 Else BlFlg=1
+    End If
+    If BlFlg Then
+      txt="<span class=" & dq &" attrow" & dq & ">"
+    End If
+    txt=txt & Diff & " seconds to next read."
+    If BlFlg Then
+      txt=txt&"</span>"
+    End If
+    NextRead.innerHTML = txt
+    intTimer = 0
+End Sub
+
+Sub IPC_Check
+	on Error Resume Next
+	Filename = DataPath & "IPCErrors.txt"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+	
+	Set RaidFile = objFSO.OpenTextFile(strTextFile, ForReading)
+	ArrayData = RaidFile.ReadAll
+	IPC_span.innerHTML = ArrayData
+End Sub
+
+Sub array_check()
+	on Error goto 0
+	on Error Resume Next
+	Filename = DataPath & "raid_array_check.txt"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+	
+	Set RaidFile = objFSO.OpenTextFile(strTextFile, ForReading)
+	ArrayData = RaidFile.ReadAll
+	
+	array_span.innerHTML = ArrayData
+	RaidFile.Close
+	If Err.Number <> 0 Then
+	  array_span.innerHTML = "Err: " & Err.Number & " - " & Err.Description & "<br>" & array_span.innerHTML
+	End If
+End Sub
+
+Sub Disk()
+    Dim Ray(15, 7)
+    'Create a File System Object
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+	
+'	strTextFile = DataPath & "stopat.txt"
+'	Closeat = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+'	autoclose.innerHTML = "Sleep at " & Closeat
+	
+    Tme = Now() - Int(Now())
+
+	If Tme > TimeValue(Closeat) and Tme <  TimeValue(Closeat) + (2 / 24 / 60) Then
+'		self.close()
+	end If
+	
+'    If Tme >= Timevalue("16:45") Then
+'		if auto.checked then
+'			self.close()
+'		End If
+'	End If
+	
+'	If Tme > 0 and Tme < Timevalue("06:45") Then
+'	  auto.checked = True
+'	End If
+
+    'name of the text file
+    Filename = DataPath & "df.txt"
+    strTextFile = Filename
+    on Error Resume Next
+    Set dffile = objFSO.GetFile(Filename)
+    Updatedate = dffile.DateLastModified
+
+    If Updatedate <> LastDFUpdatedate Then
+       On Error Resume Next
+        'Open the text file - strData now contains the whole file
+        strData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+
+        'Split the text file into lines
+        arrLines = Split(strData, vbLf)
+        Lne = arrLines(0)
+        Ray(1, 1) = "Filesystem"
+        Ray(1, 2) = "MB blocks"
+        Ray(1, 3) = "Free"
+        Ray(1, 4) = "%Used"
+        Ray(1, 5) = "Iused"
+        Ray(1, 6) = "%Iused"
+        Ray(1, 7) = "Mounted on"
+        IC = 2
+        For LCnt = 1 To UBound(arrLines)
+            Lne = Trim(arrLines(IC - 1))
+            For X = 7 To 1 Step -1
+                LstSp = InStrRev(Lne, Chr(32))
+                'Debug.Print Left(Lne, LstSp)
+                Ray(IC, X) = Mid(Lne, LstSp + 1, 40)
+                Lne = Trim(Left(Lne, LstSp))
+            Next
+            IC = IC + 1
+        Next
+        dq = Chr(34)
+        OPge = "<br><table>" & vbCrLf
+        For LC = 1 To UBound(arrLines)
+            DSpace = Replace(Ray(LC, 4), "%", "")
+            If IsNumeric(DSpace) Then
+                DSpace = DSpace * 1
+                If DSpace <= 85 Then ins = "normalrow"
+                If DSpace > 85 And DSpace <= 89 Then ins = "attrow"
+                If DSpace > 89 Then
+		  playAlarm
+		  ins = "alarmrow"
+		End If
+            End If
+            If LC = 1 Then ins = "headrow"
+            OPge = OPge & "<tr class=" & dq & ins & dq & ">"
+            For CC = 1 To 4
+                If CC > 1 And CC < 7 Then
+                    OPge = OPge & "<td align=right>"
+                Else
+                    OPge = OPge & "<td>"
+                End If
+                If LC = 1 Then OPge = OPge & "<nobr>"
+                If (CC=2 or CC=3) and LC>1 Then
+		      OPge = OPge & FormatNumber(Ray(LC, CC))
+		Else
+		      OPge = OPge & Ray(LC, CC)
+		End If
+                If LC = 1 Then OPge = OPge & "</nobr>"
+                OPge = OPge & "</td>"
+            Next
+            OPge = OPge & "<td class=" & dq & "padd" & dq & "> " & Ray(LC, 7) & "</td>" & "</tr>" & vbCrLf
+        Next
+
+        OPge = OPge & "<table>"
+        Lupd=(DAY(LastCheck)*24 + HOUR(LastCheck))*60 + MINUTE(LastCheck)
+	CTme=(DAY(now())*24 + HOUR(now()))*60 + MINUTE(now())
+	If Abs(CTme-Lupd) > 10 then
+	    Call Stale(OPge)
+	    OPge = OPge & "<span class=" & dq & "errline" & dq & ">" & "Last Update: " & LastCheck &"</style>"
+	Else
+	    OPge = OPge & "Last Update: " & LastCheck
+        End If
+        LastDFUpdatedate = Updatedate + 1 / 86400
+        DiskMap.innerHTML = OPge & "<br>"
+    End If
+End Sub
+
+Sub Scheduler()
+		On Error Resume Next
+        Filename = DataPath & "Scheduler.txt"
+        strTextFile = Filename
+        Set objFSO = CreateObject("Scripting.FileSystemObject")
+		SchData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+		If instr(SchData,"alarm")<>0 Then playAlarm
+		Sched.innerHTML = SchData
+		set SchData = Nothing
+End Sub
+
+Sub SchedStatus()
+		On Error Resume Next
+		Filename = DataPath & "Sched_Stat.txt"
+        strTextFile = Filename
+        Set objFSO = CreateObject("Scripting.FileSystemObject")
+		SchData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+		If instr(SchData,"alarm")<>0 Then playAlarm
+		Sched.innerHTML = Sched.innerHTML & SchData
+		set SchData = Nothing
+End Sub
+
+Sub Optio()
+        On Error Resume Next
+        Filename = DataPath & "LPQ.txt"
+        strTextFile = Filename
+        Set objFSO = CreateObject("Scripting.FileSystemObject")
+        Set dffile = objFSO.GetFile(Filename)
+        Updatedate = dffile.DateLastModified
+        If Updatedate <> LastLPUpdatedate Then
+            'Open the text file - strData now contains the whole file
+            LPstrData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+            OLne = Split(LPstrData, "\")
+            Sp = Trim(OLne(1))
+			LPstrData = Olne(0) & "<br>" & Olne(2) & "<hr>"
+'*****************************************
+			If LCase(Mid(Olne(2), 4, 2)) <> "no" Then
+				LPDown = True
+			Else
+				LPDown = False
+			End If
+'*****************************************			
+			If SP >= 10 Then
+			LPstrData = "<span class=" & dq & "attrow" & dq & ">" & OLne(0)
+                LPstrData = LPstrData & "</class>"
+            End If
+            If Sp >= 20 or LPDown Then
+                playAlarm
+				LPstrData = "<span class=" & dq & "errline" & dq & ">" & LPstrData
+                LPstrData = LPstrData & "</class>"
+            End If
+            LastLPUpdatedate = Updatedate + 1 / 86400
+        
+            PrintJobs.innerHTML = LPstrData
+        End If
+End Sub
+
+Sub UnixErr()
+    On Error Resume Next
+    Const ForReading = 1
+    Filename = DataPath & "errunix.txt"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set dffile = objFSO.GetFile(Filename)
+    Updatedate = dffile.DateLastModified
+    If Updatedate <> LastERRUpdatedate Then
+        'Open the text file - strData now contains the whole file
+        ERRstrData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+        arrLines = Split(ERRstrData, vbLf)
+
+        LastERRUpdatedate = Updatedate + 5 / 86400
+
+        OPge = "<div class=" & dq & "scroll" & dq & ">"
+        OPge = OPge & "<table >"
+        NoDs = 5
+        Flg = ""
+        For IC = 2 To UBound(arrLines) - 1
+            ILne = arrLines(IC)
+'           OLne = "<tr>"
+            ODte = ""
+            IDte = Trim(Mid(ILne, 12, 11))
+            ODte = ODte & Mid(IDte, 1, 2) & "/"
+            ODte = ODte & Mid(IDte, 3, 2) & "/"
+            ODte = ODte & Mid(IDte, 9, 2) & " "
+            ODte = ODte & Mid(IDte, 5, 2) & ":"
+            ODte = ODte & Mid(IDte, 7, 2)
+            If IC = 0 Then ODte = IDte
+            If DateValue(ODte) >= Int(Now()) - (NoDs + 1) Then
+		ins = "normalrow"
+                If Mid(ILne, 23, 1) = "P" Then ins = "alarmrow"
+                If IC = 0 Then ins = "headrow"
+                OLne = "<tr class="&dq&ins&dq&">"
+
+                OLne = OLne & "<td>" & Trim(Mid(ILne, 1, 11)) & "</td>"
+                OLne = OLne & "<td><nobr>" & ODte & "</nobr></td>"
+                OLne = OLne & "<td><nobr>" & Trim(Mid(ILne, 23, 4)) & "</nobr></td>"
+                OLne = OLne & "<td><nobr>" & Trim(Mid(ILne, 27, 13)) & "</nobr></td>"
+                OLne = OLne & "<td><nobr>" & Trim(Mid(ILne, 42, 50)) & "</nobr></td>"
+                OLne = OLne & "<tr>" & vbCrLf
+                If IC <> 1 then Flg = "set"
+		OPge = OPge & OLne
+            End If
+'            OLne = OLne & "<tr>" & vbCrLf
+            
+        Next
+        OPge = OPge & "</table></div>"
+        If Flg = "set" Then
+            errpt.innerHTML = "Most recent System Errors reported for the last " & NoDs & " days. (" & arrLines(0) & ")" & OPge
+        Else
+            errpt.innerHTML = "No UNIX Errors reported in the last " & NoDs & " days. (" & arrLines(0) & ")"
+        End If
+	'*****************************
+	' Check if Tape is in Drive. *
+	'*****************************
+        Filename = DataPath & "tapestatus.txt"
+		Set objFile = objFSO.OpenTextFile(Filename, ForReading)
+		TapeChkTime = objFile.ReadLine
+		TapeStatus = objFile.ReadLine
+		If Left(TapeStatus, 7) = "No Tape" Then
+'			Tapeejct = 1
+'			playAlarm
+		End If
+		objFile.Close
+		
+
+	'*************************
+	' Check Backup Excludes. *
+	'*************************
+        Filename = DataPath & "sysbackexc.txt"
+        strTextFile = Filename
+        Set objFSO = CreateObject("Scripting.FileSystemObject")
+        Set dffile = objFSO.GetFile(Filename)
+        Updatedate = dffile.DateLastModified
+        ERRstrData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+        arrLines = Split(ERRstrData, vbLf)
+	Eflg = 0
+	If InStr(ERRstrData, "/ud/JSI") > 0 Then Eflg = 1
+	If InStr(ERRstrData, "/ud/TEST") > 0 Then Eflg = 1
+'	If InStr(ERRstrData, "/ud/ARCHIVE") > 0 Then Eflg = 1  Disabled check on 06/17/14
+
+	strOut = ""
+	If Tapeejct = 1 Then
+'		strOut = "<span class=" & dq & "errline" & dq & "><h2>Check on the Tape!</H2></span>"
+	Else
+'		strOut = "Last Tape check " & TapeChkTime & "<br>"
+	End If
+	
+	If EFlg Then
+	    strOut = strOut & "<H2>Please Check the Backup Exclude List !</h2>"
+	Else
+	    strOut = strOut & "Last Backup exclude Check: " & arrLines(0)
+	End If
+	strOut = strOut & "<br>"
+'*****************************************************************
+
+'*****************************************************************
+    Filename = DataPath & "rsync.log"
+	Set objFile = objFSO.OpenTextFile(Filename, ForReading)
+	strContents = objFile.ReadAll
+	objFile.Close
+	LogBody = Split(strContents, Chr(10))
+    
+    For LC = 1 To UBound(LogBody)
+        If Left(LogBody(LC), 5) = "rsync" and DispText = "" Then
+            ECde = Trim(LogBody(LC - 1))
+			SPos = instrrev(ECde, " ")
+			ECde = Trim(mid(ECde,SPos,50))
+			DispText = LogBody(LC + 1) & " with " & LogBody(LC)
+			If ECde <> 0 Then
+			  FntIns = "<font color=" & dq & "red" & dq & ">"
+			Else
+			  FntIns = "<font style=" & dq & "background-color:green;color:white" & dq & ">"
+			End If
+        End If
+    Next
+	DispText = FntIns & DispText &"</font>"
+	strOut = strOut & DispText & "<br><hr width=50%>"
+	
+	
+'*****************************************************************
+'alog -f /var/adm/ras/sysback.log -o > /ibmfiles/sysmon/backup.log
+'*****************************************************************
+'*****************************************************************
+    Filename = DataPath & "backup.log"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+
+    Set objFile = objFSO.OpenTextFile(Filename, ForReading)
+    strContents = objFile.ReadAll
+    objFile.Close
+    strContents = Split(strContents, vbLf)
+    strOut = strOut & strContents(LC) & "<BR>" & vbCrLf
+    DteHld = 0
+    ICM = UBound(strContents)
+    For LC = 1 To ICM
+        If Left(strContents(LC), 8) = "Command:" Then
+            If Left(strContents(LC + 1), 5) = "Date:" Then
+                BackupDte = DateValue(Mid(strContents(LC + 1), 11, 6) & Right(strContents(LC + 1), 5))
+				If BackupDte > DteHld Then
+                    DteHld = BackupDte
+                End If
+            End If
+        End If
+    Next
+    
+    For LC = 1 To ICM
+        If Left(strContents(LC), 8) = "Command:" Then
+            If Left(strContents(LC + 1), 5) = "Date:" Then
+                If DateValue(Mid(strContents(LC + 1), 11, 6)) = DteHld Then
+                    JC = LC
+                    strHld = ""
+                    While Left(strContents(JC + 1), 8) <> "Command:" And UBound(strContents) > JC + 1
+                        strHld = strHld & strContents(JC) & "<BR>" & vbCrLf
+                        JC = JC + 1
+                    Wend
+                    If UBound(strContents) = JC + 1 Then
+                        strHld = strHld & strContents(JC) & "<BR>" & vbCrLf
+                    End If
+                    strHld = strHld & "<BR>" & vbCrLf
+                    Failure = InStr(strHld, "FAILURE:")
+                    Success = InStr(strHld, "SUCCESS:")
+                    WARNING = InStr(strHld, "WARNING:")
+                    If Failure > 0 Then
+                        FntIns = "<font color=" & dq & "red" & dq & ">"
+                    End If
+                    If Success > 0 Then
+                        FntIns = "<font color=" & dq & "black" & dq & ">"
+                        FntIns = "<font style=" & dq & "background-color:green;color:white" & dq & ">"
+                    End If
+                    If WARNING > 0 Then
+                        FntIns = "<font style=" & dq & "background-color:#ffff00" & dq & ">"
+                    End If
+                    strOut = strOut & FntIns & vbCrLf & strHld & "</font>"
+                End If
+            End If
+        End If
+    Next
+'*****************************************************************
+	errpt.innerHTML = strOut & "<br>" & errpt.innerHTML
+    End If
+End Sub
+
+Sub Phantom()
+    On Error Resume Next
+    Filename = DataPath & "phantom.txt"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set phfile = objFSO.GetFile(Filename)
+'        jobs are running.
+        EFlg=""
+	on Error Resume Next
+	strData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+	If Err.Number<>0 Then EFlg="set"
+	On Error goto 0
+'	If Left(strData,2) = "OK" Then
+	If Left(strData, 2) = "OK" Or Mid(strData, 12, 2) = "OK" Then
+	    phantm.innerHTML = Trim(strData)
+	Else
+	    playAlarm
+	    phantm.innerHTML = "<span class=" & dq & "errline" & dq & ">" & Trim(strData)
+            phantm.innerHTML = phantm.innerHTML & "</class>"
+	End If
+	If EFlg="set" Then
+	    phantm.innerHTML = "<span class=" & dq & "errline" & dq & ">Read Error - " & Trim(strData)
+            phantm.innerHTML = phantm.innerHTML & "</class>"
+	End If
+End Sub
+
+Sub UDTErr()
+    On Error Resume Next
+    SError=0
+    WError=0
+    Filename = DataPath & "udtsum.txt"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set dffile = objFSO.GetFile(Filename)
+    Updatedate = dffile.DateLastModified
+    If Updatedate <> LastERRUpdatedate Then
+        strData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+        arrLines = Split(strData, vbLf)
+        For LC = 0 To UBound(arrLines)
+            Lne = arrLines(LC)
+            If Lne <> "" And IsDate(Mid(Lne, 5, 6)) And LC > 0 Then
+                If DateValue(Mid(Lne, 5, 6)) + Value(Mid(Lne, 12, 8)) > Now() - 1 Then
+                    If InStr(Lne, "Warning") = 0 Then
+                        SError = SError + 1
+                    Else
+                        WError = WError + 1
+                    End If
+		    TError = TError + 1
+                End If
+                IC = IC + 1
+            End If
+        Next
+
+    End If
+    If SError=0 Then SError="no"
+    If WError=0 Then WError="no"
+    UDTerrpt.innerHTML = "In the last 24 hrs, UNIDATA logged  " & TError & "  Errors."
+    UDTerrpt.innerHTML = arrLines(1) & "  (" & arrLines(0) & ")"
+    'Cleanup
+    Set dffile = Nothing
+    Set objFSO = Nothing
+End Sub
+
+sub CheckSears
+    FromPath = "U:\Sears\Backup"
+    Set FSO = CreateObject("scripting.filesystemobject")
+    LastDte = 0
+    On Error Resume Next
+    For Each FileInFromFolder In FSO.getfolder(FromPath).Files
+        FDate = (FileInFromFolder.DateLastModified)
+        If FDate > LastDte Then LastDte = FDate
+    Next
+    If Err.Number <> 0 Then
+      On Error goto 0
+      Exit Sub
+    End If
+
+    If Weekday(now(), vbMonday) = 1 Then Diff = 49 Else Diff = 25
+    Hago = DateDiff("h", LastDte, Now)
+    Mago = (Hago-DateDiff("n", LastDte, Now) / 60 ) * 60
+    If Hago > Diff Then
+        Msg0 = "<font color=red><b>"
+	Msg2 = "</b></font>"
+    End If
+
+    Msg1 = "Last Sears file date: " & WeekdayName(Weekday(LastDte)) & ", " & LastDte & ", " & Hago & " hrs"
+    Msg1 = Msg1 & ", " & Round(Mago, 0) & " min ago."
+    checkjobs.innerHTML = Msg0 & Msg1 & Msg2
+
+    set DPLFle = FSO.GetFile("U:\Dealer_Price_List\DealerPriceList.html")
+    FPLDte = DPLFle.DateLastModified
+    checkjobs.innerHTML = checkjobs.innerHTML & "<br>Last Dealer Price List created: " & FPLDte
+    Set FSO = Nothing
+End Sub
+
+Sub keypress()
+    With Window.Event
+      act=""
+      If .KeyCode = 27 Then
+        act="Exit"
+	self.close()
+      End If
+      If .KeyCode = asc("s") or .KeyCode = asc("S") Then
+        act=chr(.KeyCode) & " - Save Position"
+        Window_onBeforeUnLoad
+      End If
+      If .KeyCode = asc("r") or .KeyCode = asc("R") Then
+        act=chr(.KeyCode) & " - Refresh"
+        Main ("First")
+      End If
+      If .KeyCode = asc("<") Then
+        act=" < - Left"
+        intLeft=intLeft-1
+	Window.moveTo intLeft, intTop
+      End If
+      If .KeyCode = asc(">") Then
+        act="> - Right"
+        intLeft=intLeft+1
+	Window.moveTo intLeft, intTop
+      End If
+      If .KeyCode = asc("u") or .KeyCode = asc("U") Then
+        act=chr(.KeyCode) & " - Up"
+	intTop=intTop-1
+	Window.moveTo intLeft, intTop
+      End If
+      If .KeyCode = asc("d") or .KeyCode = asc("D") Then
+        act=chr(.KeyCode) & " - Down"
+	intTop=intTop+1
+	Window.moveTo intLeft, intTop
+      End If
+      If .KeyCode = asc("w") or .KeyCode = asc("W") Then
+        act=chr(.KeyCode) & " - Wider"
+        intWdt=intWdt+1
+        Window.resizeTo intWdt, intHgt
+      End If
+      If .KeyCode = asc("n") or .KeyCode = asc("N") Then
+        act=chr(.KeyCode) & " - Narrower"
+        intWdt=intWdt-1
+        Window.resizeTo intWdt, intHgt
+      End If
+      If .KeyCode = asc("h") Then
+        act=chr(.KeyCode) & " - Shorter"
+        intHgt = intHgt-1
+        Window.resizeTo intWdt, intHgt
+      End If
+      If .KeyCode = asc("H") Then
+        act=chr(.KeyCode) & " - Higher"
+        intHgt = intHgt+1
+        Window.resizeTo intWdt, intHgt
+      End If
+      If .KeyCode = asc("t") Then
+        act=chr(.KeyCode) & " - Taller"
+        intHgt = intHgt+1
+        Window.resizeTo intWdt, intHgt
+      End If
+      If .KeyCode = asc("T") Then
+        act=chr(.KeyCode) & " - Taller"
+        intHgt = intHgt+1
+        Window.resizeTo intWdt, intHgt
+      End If
+      key.innerHTML = act
+    End With
+End Sub
+'******************************************************************
+Sub ReadTime()
+    On Error Resume Next
+    Filename = DataPath & "time.txt"
+    strTextFile = Filename
+    Set objFSO = CreateObject("Scripting.FileSystemObject")
+    Set dffile = objFSO.GetFile(Filename)
+    Updatedate = dffile.DateLastModified
+    If Updatedate <> LastERRUpdatedate Then
+        strData = objFSO.OpenTextFile(strTextFile, ForReading).ReadAll
+	LastCheck = strData'strData
+    End If
+    On Error Goto 0
+End Sub
+
+Sub Stale(OPge)
+    OPge = "<br><table><tr><td>" & vbCrLf
+    OPge = OPge & "<h1>The Information seems to be Stale !!</h1><br>"
+    OPge = OPge & "Make sure that " & DataPath & " is reachable from a P/C.<br>"
+    OPge = OPge & "Please make sure that the SYSMON.JSI ran this morning.<br>"
+    OPge = OPge & "Make sure that the Phantom Job SYSMON.JSI is currently running.<br>"
+    OPge = OPge & "Make sure that " & DataPath & " is reachable from a P/C.<br>"
+    OPge = OPge & "</td></tr></table><br>" & vbCrLf
+    playAlarm
+End Sub
+
+Sub playAlarm()
+	alarm.settings.playcount = 1
+    On Error Resume next
+	alarm.url=DataPath & "Data\Alarm.wav"
+'	alarm.url=DataPath & "Data\Alarm.MP3Error2.WAV"
+'	alarm.url="S:\IT\Annunciator\Data\Error.WAV"
+End Sub
+'********************************************************
+'Check Webserver backups.
+Sub WebServerBack()
+	Set fso = CreateObject("Scripting.FileSystemObject")
+
+    Dim WebServer(4)
+    WebServer(1) = "webstorefe1"
+    WebServer(2) = "webstorebl1"
+    WebServer(3) = "webstorest1"
+    WebServer(4) = "webstoredb"
+    
+    ' Define folder we want to check files in
+    ThisDate = Year(Now()) & Right(Month(Now()) + 100, 2) & Right(Day(Now()) + 100, 2)
+    If Day(Now()) = 1 Then
+        ThisMonth = Right(Month(Now()) + 99, 2)
+    Else
+        ThisMonth = Right(Month(Now()) + 100, 2)
+    End If
+    LogPath = Year(Now()) & ThisMonth
+    strPath = "S:\IT\Reports\LogFiles\" & LogPath
+	Set folder = fso.GetFolder(strPath)
+
+	For Each foundFile In folder.Files
+		fileName = foundFile.name
+		If Mid(fileName, 10, 8) = "webstore" Then
+            ServerName = Mid(fileName, 10, 10)
+            For IC = 1 To UBound(WebServer)
+                LineStub = ThisDate & " " & WebServer(IC)
+                If Left(fileName, Len(LineStub)) = LineStub Then
+                    ThisCnt = ThisCnt + 1
+                End If
+            Next
+        End If
+    Next
+	If ThisCnt <> 4 then
+		webstore.innerHTML = "<font color=red>There are only " & ThisCnt & " webstore backups.</font>"
+	Else
+		webstore.innerHTML = "All " & ThisCnt & " webstore backups are accounted for."
+	End If
+End Sub
+
+</script>
+<!-- *************** -->
+<body bgcolor="buttonface" onkeypress="keypress">
+<span id="xyz">	
+    <h2 align="center">-- Johnson Supply Disk Map --</h2>
+    <center>
+        <span id = "Stats"></span>
+				<span id = "Clock"></span>&nbsp;&nbsp;&nbsp;
+        <span id = "autoclose">Sleep at 16:45</span>
+				<span id = "pth" class="pth"></span>
+		<span id = "Diskmap"></span>
+        <span id = "NextRead"></span>
+        <hr>
+		<span id = "array_span"></span>
+		<span id = "IPC_span" class="errline"></span><hr>
+        <span id = "PrintJobs"></span>
+        <span id = "Sched"></span>
+        <hr>
+        <span id = "UDTerrpt"></span>
+        <hr>
+        <span id = "phantm"></span>
+        <hr>
+		<span id = "webstore">aaaaaaa</span>
+		<hr>
+        <span id="checkjobs"></span>
+        <hr>
+	<span id = "errpt"></span>
+        <hr>
+	<input type="button" value='Play Sound' onclick="playAlarm"/>
+	<br>
+	<span id = "key"></span>
+	<br>
+	<span id = "LastMod" class="LastMod"></span>
+    </center>
+</span>
+</body>
+</html> 

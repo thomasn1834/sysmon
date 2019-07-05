@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<!-- Sysmon_v02.html -->
+<html>
+<head>
+<title>JohnsonsSupply Sysmon</title>
+<link rel="stylesheet" type="text/css" href="Sysmon_v02.css">
+<style>
+.head {
+    background-color: white;
+}
+</style>
+
+<script>
+var sec = 30;
+function startTime() {
+    var today = new Date();
+    var h = today.getHours();
+    var m = today.getMinutes();
+    var s = today.getSeconds();
+    m = checkTime(m);
+    s = checkTime(s);
+    document.getElementById('txt').innerHTML =
+    "<h4>" + h + ":" + m + ":" + s  + " (next refresh in " + sec + " sec)</h4>";
+    sec = sec - 1;
+    if (sec <= 0) {
+//      sec = 30
+    }
+    var t = setTimeout(startTime, 1000);
+}
+function checkTime(i) {
+    if (i < 10) {i = "0" + i};  // add zero in front of numbers < 10
+    return i;
+}
+
+a=new AudioContext() // browsers limit the number of concurrent audio contexts, so you better re-use'em
+
+function beep(vol, freq, duration) {
+  v=a.createOscillator()
+  u=a.createGain()
+  v.connect(u)
+  v.frequency.value=freq
+  v.type="square"
+  u.connect(a.destination)
+  u.gain.value=vol*0.01
+  v.start(a.currentTime)
+  v.stop(a.currentTime+duration*0.001)
+}
+
+function refreshxx() {
+  var xhr = new XMLHttpRequest();
+  xhr.timeout = 990; // time in milliseconds
+  xhr.onload = function (x) {
+    if(xhr.status == 200) {
+      var res = xhr.responseText;
+      var [html, alarm] = res.split("0xdeadbeef");
+      flex1.innerHTML = html;
+      if(alarm == "True") {
+        beep(999, 210, 800); beep(999, 500, 800);
+      }
+    } else {
+      flex1.innerHTML = "error";
+    }
+    sec = 30;
+  }
+  xhr.ontimeout = function(e) {
+    flex1.innerHTML = '<H1><center>The sysmon server is temporarily not reachable, <br>or not running.</center></H1>';
+  }
+  xhr.open("GET", "/systeminfo/refresh");
+  xhr.send();
+}
+// Insert
+function refresh() {
+  var start = new Date();
+  if (start.getHours() >= 7 && start.getHours() <= 18) {
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 990; // time in milliseconds
+    xhr.onload = function (x) {
+      if(xhr.status == 200) {
+        var res = xhr.responseText;
+        var [html, alarm] = res.split("0xdeadbeef");
+        flex1.innerHTML = html;
+        if(alarm == "True") {
+          beep(999, 210, 800); beep(999, 500, 800);
+        }
+      } else {
+        flex1.innerHTML = "error";
+      }
+      sec = 30;
+    }
+    xhr.ontimeout = function(e) {
+      flex1.innerHTML = '<H1><center>The sysmon server is temporarily not reachable, <br>or not running.</center></H1>';
+    }
+    xhr.open("GET", "/systeminfo/refresh");
+    xhr.send();
+  } else {
+    flex1.innerHTML = '<H1>Outside of business hours.</H1><br><h2>07:00 - 18:00</h2>'
+  }
+}
+// Insert end
+
+var interval = window.setInterval(refresh, 30 * 1000);
+</script>
+</head>
+<body bgcolor="buttonface" onload="startTime(); refresh()">
+	<center class="head">
+	<h1>Johnson Supply sysmon</h1>
+	<div id="txt"></div>
+	</center>
+
+	<div class="flex-container" id="flex1">
+		<!-- Insert AJAX Start -->
+		<!-- Insert AJAX End -->
+	</div>
+	<hr>
+	<hr>
+	<center>
+		<button style="width: 30%; height: 50px; font-size: 2em" onclick="beep(999, 210, 800); beep(999, 500, 800);">Test Alarm</button>
+                <button style="width: 30%; height: 50px; font-size: 2em" onclick="window.location.reload(true);">Reload</button>
+	</center>
+</body>
+</html>

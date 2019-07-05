@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+div.msg {
+    line-height: 1.6;
+}
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: DodgerBlue;
+  justify-content: center;
+}
+
+.flex-container > div {
+  background-color: #f1f1f1;
+  margin: 10px;
+  text-align: center;
+  line-height: 40px;
+  font-size: 30px;
+}
+</style>
+<link rel="stylesheet" type="text/css" href="Sysmon_new.css">
+</head>
+<body bgcolor="buttonface">
+<center><h1>Johnson Supply sysmon</h1></center>
+
+<div class="flex-container">
+  <div class="map">
+
+	<table>
+		<tr class="headrow"><td>Filesystem</td><td>MB blocks</td><td>Free</td><td>%Used</td><td>Mounted on</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd4</td><td align="right">512.00</td><td align="right">172.21</td><td align="right">67%</td><td align="left" class="padd">/</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd2</td><td align="right">5376.00</td><td align="right">1238.59</td><td align="right">77%</td><td align="left" class="padd">/usr</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd9var</td><td align="right">2560.00</td><td align="right">1810.59</td><td align="right">30%</td><td align="left" class="padd">/var</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd3</td><td align="right">2560.00</td><td align="right">1288.62</td><td align="right">50%</td><td align="left" class="padd">/tmp</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/fwdump</td><td align="right">1536.00</td><td align="right">1535.45</td><td align="right">1%</td><td align="left" class="padd">/var/adm/ras/platform</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd1</td><td align="right">512.00</td><td align="right">437.59</td><td align="right">15%</td><td align="left" class="padd">/home</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd11admin</td><td align="right">256.00</td><td align="right">255.62</td><td align="right">1%</td><td align="left" class="padd">/admin</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/proc</td><td align="right">-</td><td align="right">-</td><td align="right">-</td><td align="left" class="padd">/proc</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/hd10opt</td><td align="right">768.00</td><td align="right">312.73</td><td align="right">60%</td><td align="left" class="padd">/opt</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/livedump</td><td align="right">256.00</td><td align="right">255.64</td><td align="right">1%</td><td align="left" class="padd">/var/adm/ras/livedump</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/fslv00</td><td align="right">90112.00</td><td align="right">87027.09</td><td align="right">4%</td><td align="left" class="padd">/vtape</td></tr>
+		<tr class="normalrow"><td align="left" class="padd">/dev/fslv01</td><td align="right">645120.00</td><td align="right">290120.95</td><td align="right">56%</td><td align="left" class="padd">/ud</td></tr>
+		<tr class="alarmrow"><td align="left" class="padd">/dev/fslv02</td><td align="right">5120.00</td><td align="right">3384.71</td><td align="right">90%</td><td align="left" class="padd">/usr/udthome</td></tr>
+		<tr class="attrow"><td align="left" class="padd">/dev/fslv03</td><td align="right">11776.00</td><td align="right">11764.50</td><td align="right">86%</td><td align="left" class="padd">/usr/sys/inst.images</td></tr>
+	</table>
+  </div>
+  <div class="msg">
+	<font color="red">hdisk0    00FF0000  Degraded    RAID 10 Array          139.6GB                 <br>
+	hdisk1    00FF0000  Degraded    RAID 10 Array           1135GB                 <br>
+	pdisk10   00000800  Active      Hot Spare              283.8GB                 <br>
+	10/03/18 11:00:00<br></font>
+	<hr>
+	09:21:11 jsiopt: 0 -  jsiopt2: 0 -  jsiopt3: 0 - total: 0 queued.<br> - No printers are down.
+	<hr>
+	11:11:13 SYS is locking the scheduler.
+	<br><span class="attrow">11:13:15 1 Scheduler jobs being held: 5762</span>
+	
+	<hr>In the last 24 hrs, there were 0 FILE, 0 BLOCK, 0 other Errors.
+	<hr>11:18:09 - OK - The 10 monitored jobs are running.
+	<hr><font style="background-color:green;color:white">rsync process Completed at: Wed Oct  3 01:29:45 CDT 2018</font>
+  </div>
+<div>
+  10/03/18 12:30
+=============== ALOG /var/adm/ras/sysback.log output ===============
+
+Log file size has been changed from "4096" to "16384"
+
+
+Command: /usr/sbin/sysrestore -NT -c /dev/pts/81 -i 1 -f /dev/rmt0
+Date: Wed May 31 13:07:39 CDT 2017
+
+Command: /usr/sbin/sysrestore -nNL -tR -c /dev/pts/81 -f/dev/rmt0
+Date: Wed May 31 13:11:13 CDT 2017
+
+Command: /usr/sbin/sysrestore -Nn -f/dev/rmt0 -tRegular_File -vx -D/ud/restore /ud/JSI.CUSTOM/COMM.LINE.HIST.JSI /ud/JSI.CUSTOM/D_COMM.LINE.HIST.JSI
+Date: Wed May 31 13:12:40 CDT 2017
+SUCCESS: Restore completed successfully
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Thu Jun  1 01:00:04 CDT 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Thu Jun  1 01:01:46 2017
+  User is root at prelude
+  Estimated size is 178191 MB
+Backup ended Thu Jun  1 02:08:15 CDT 2017
+SUCCESS: System backup completed successfully.
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Sat Jul  1 01:00:01 CDT 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Sat Jul  1 01:42:43 2017
+  User is root at prelude
+  Estimated size is 179659 MB
+Backup ended Sat Jul  1 02:42:48 CDT 2017
+SUCCESS: System backup completed successfully.
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Tue Aug  1 01:00:02 CDT 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Tue Aug  1 01:01:41 2017
+  User is root at prelude
+  Estimated size is 181493 MB
+Backup ended Tue Aug  1 02:05:01 CDT 2017
+SUCCESS: System backup completed successfully.
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Fri Sep  1 01:00:01 CDT 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Fri Sep  1 01:01:22 2017
+  User is root at prelude
+  Estimated size is 189489 MB
+Backup ended Fri Sep  1 02:06:09 CDT 2017
+SUCCESS: System backup completed successfully.
+
+Command: /usr/sbin/sysrestore -NT -c /dev/pts/73 -i 1 -f vdev0
+Date: Wed Sep 20 15:48:27 CDT 2017
+
+Command: /usr/sbin/sysrestore -NT -c /dev/pts/73 -i 1 -f vdev0
+Date: Wed Sep 20 15:48:32 CDT 2017
+
+Command: /usr/sbin/sysrestore -NT -c /dev/pts/73 -i 1 -f /dev/rmt0
+Date: Wed Sep 20 15:48:52 CDT 2017
+
+Command: /usr/sbin/sysrestore -nNL -tR -c /dev/pts/73 -f/dev/rmt0
+Date: Wed Sep 20 15:50:45 CDT 2017
+
+Command: /usr/sbin/sysrestore -Nn -f/dev/rmt0 -tRegular_File -vx -D/vtape /ud/JSI-DATA/D_PRODUCT /ud/JSI-DATA/PRODUCT /ud/JSI-DATA/X_PRODUCT
+Date: Wed Sep 20 15:55:03 CDT 2017
+SUCCESS: Restore completed successfully
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Sun Oct  1 01:00:01 CDT 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Sun Oct  1 01:01:26 2017
+  User is root at prelude
+  Estimated size is 186478 MB
+Backup ended Sun Oct  1 02:04:47 CDT 2017
+SUCCESS: System backup completed successfully.
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Wed Nov  1 01:00:02 CDT 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Wed Nov  1 01:01:28 2017
+  User is root at prelude
+  Estimated size is 187296 MB
+Backup ended Wed Nov  1 02:05:30 CDT 2017
+SUCCESS: System backup completed successfully.
+
+Command: /usr/sbin/sysback -f/dev/rmt0 -T chrp -k 64 -E /usr/lpp/sysback/.exclude_eom -w /tmp/sysback -G -u -W udvg
+Date: Fri Dec  1 01:00:02 CST 2017
+Backing up System:
+  Volume Groups " rootvg udvg"
+  Start date is Fri Dec  1 01:01:24 2017
+  User is root at prelude
+  Estimated size is 188460 MB
+Backup ended Fri Dec  1 02:03:38 CST 2017
+SUCCESS: System backup completed successfully.
+  <div>
+    212564 122354 212564 122354 212564 122354
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,73 @@
+div.msg {
+    line-height: 1.6;
+}
+
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  background-color: DodgerBlue;
+  justify-content: center;
+}
+
+.flex-container > div {
+  background-color: #f1f1f1;
+  margin: 10px;
+  text-align: center;
+  line-height: 20px;
+/*  font-size: 30px; */
+}
+
+.padd {
+ padding-left:10px;
+}
+.headrow
+{
+  background-color:#808000;
+  color:black; 
+}
+
+.normalrow
+{
+  background-color:#008000;
+  color:white; 
+}
+
+.attrow 
+{
+  background-color:#ffff00;
+  color:black; 
+}
+.alarmrow 
+{
+  background-color:#ff0000;
+  color:white; 
+}
+.errline
+{
+  background-color:#ff0000;
+  color:white; 
+}
+.pth
+{
+  background-color:#ff0000;
+  color:white; 
+  font-size: 10px;
+}
+div.scroll
+{
+  overflow: auto;
+  border: 1px solid #666;
+  background-color: #ccc;
+  padding: 8px;
+}
+.LastMod
+{
+  font-size: .5em;
+  background-color:#9999ff;
+  color:black; 
+}
+tr 
+{ 
+  line-height: 2; 
+}
+
